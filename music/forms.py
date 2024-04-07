@@ -4,4 +4,4 @@ from .models import Music
 class MusicForm(forms.ModelForm):
     class Meta:
         model = Music
-        fields = ['title', 'artist', 'audio_file']
+        fields = ['title', 'artist', 'audio_file', 'image_file']

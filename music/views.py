@@ -1,11 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout
 from .forms import MusicForm
 from .models import Music
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-
+from django.contrib.auth.decorators import login_required
 
 def signup(request):
     if request.method == 'POST':
@@ -32,12 +32,14 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return HttpResponseRedirect(reverse('music:login'))
-
 def display(request):
-    songs = Music.objects.all()
-    return render(request, 'display.html', {'songs': songs})
-
-from django.contrib.auth.decorators import login_required
+    query = request.GET.get('q')
+    if query:
+        songs = Music.objects.filter(title__icontains=query)
+    else:
+        songs = Music.objects.all()
+    listen_later_songs = request.user.listen_later_songs.all()
+    return render(request, 'display.html', {'songs': songs, 'listen_later_songs': listen_later_songs})
 
 @login_required
 def add_song(request):
@@ -51,4 +53,10 @@ def add_song(request):
     else:
         form = MusicForm()
     return render(request, 'add_song.html', {'form': form})
+
+@login_required
+def add_to_listen_later(request, song_id):
+    song = get_object_or_404(Music, id=song_id)
+    request.user.listen_later_songs.add(song)
+    return redirect('music:display')
 
